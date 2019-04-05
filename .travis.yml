@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t wtchang92/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run wtchang92/react-test npm test -- --coverage
+  # -- -- coverage so that the test is not in watch mode
+
+after_success:
+  - docker build -t wtchang92/multi-client ./client
+  - docker build -t wtchang92/multi-nginx ./nginx
+  - docker build -t wtchang92/multi-server ./server
+  - docker build -t wtchang92/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push wtchang92/multi-client
+  - docker push wtchang92/multi-nginx
+  - docker push wtchang92/multi-server
+  - docker push wtchang92/multi-worker
