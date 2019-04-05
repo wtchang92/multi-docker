@@ -1,0 +1,48 @@
+version: '3'
+services:
+  postgres: # does not use build... use image to use public image
+    image: 'postgres:latest'
+  redis: # does not use build... use image to use public image
+    image: 'redis:latest'
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+  nginx:
+    restart: always
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - '3050:80' # 3050 on my localhost to 80 in container
+  api:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./server
+    volumes:
+      - /app/node_modules
+      - ./server:/app #localhost : remote location
+    environment: # Look into docker hub for information
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379 # Look on docker hub redis guide - 6379 is the default
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPORT=5432
+  client:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./client
+    volumes:
+      - /app/node_modules
+      - ./client:/app #localhost : remote location
+  worker:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+    environment: 
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
